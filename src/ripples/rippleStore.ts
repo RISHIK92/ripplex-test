@@ -5,3 +5,7 @@ export const countStore = {
   loading: ripple(false),
   error: ripple<string | null>(null),
 };
+
+export let countNewStore = ripple({
+  countNew: 0,
+});
