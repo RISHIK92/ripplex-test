@@ -1,9 +1,8 @@
-import { useRipple } from "ripplex";
-import { countNewStore, countStore } from "../ripples/rippleStore";
-import React from "react";
+import { useRipple } from "../../lib";
+import { countStore } from "../ripples/rippleStore";
 
 export const RipplexCounter = ({ index }: { index: number }) => {
-  const count = useRipple(countNewStore, (c) => c.countNew);
+  const count = useRipple(countStore.count);
   return (
     <div>
       #{index}: {count}

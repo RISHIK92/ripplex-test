@@ -15,3 +15,17 @@ export function on(event: string, handler: Listener) {
     eventBus.get(event)?.delete(handler);
   };
 }
+
+
+
+// Typescript  
+
+
+// types
+
+// utils  
+
+
+// Example 
+
+

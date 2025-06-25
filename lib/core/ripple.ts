@@ -11,6 +11,90 @@ export interface Ripple<T> {
 const RIPPLE_BRAND = Symbol("signal");
 
 export function ripple<T>(initial: T): Ripple<T> {
+  if (typeof initial === "object" && initial !== null) {
+    return rippleObject(initial as any) as Ripple<T>;
+  }
+  return ripplePrimitive(initial);
+}
+
+function createProxy<T extends object>(target: T, notify: () => void): T {
+  return new Proxy(target, {
+    get(obj, key, receiver) {
+      const value = Reflect.get(obj, key, receiver);
+      // Deep proxy for nested objects/arrays
+      if (typeof value === "object" && value !== null) {
+        return createProxy(value as any, notify);
+      }
+      return value;
+    },
+    set(obj, key, value) {
+      const old = obj[key as keyof T];
+      const result = Reflect.set(obj, key, value);
+      if (!Object.is(old, value)) {
+        notify();
+      }
+      return result;
+    },
+    deleteProperty(obj, key) {
+      const result = Reflect.deleteProperty(obj, key);
+      notify();
+      return result;
+    },
+  });
+}
+
+function rippleObject<T extends object>(initial: T): Ripple<T> {
+  let rawValue = initial;
+
+  const subscribers = new Set<{
+    callback: () => void;
+    selector: (v: T) => unknown;
+    prevValue: unknown;
+  }>();
+
+  const notify = () => {
+    for (const sub of subscribers) {
+      const nextVal = sub.selector(proxyValue);
+      if (!Object.is(nextVal, sub.prevValue)) {
+        sub.prevValue = nextVal;
+        sub.callback();
+      }
+    }
+  };
+
+  let proxyValue = createProxy(initial, notify);
+
+  const subscribe = (
+    callback: () => void,
+    selector: (v: T) => unknown = (v) => v
+  ) => {
+    const subscriber = {
+      callback,
+      selector,
+      prevValue: selector(proxyValue),
+    };
+    subscribers.add(subscriber);
+    return () => subscribers.delete(subscriber);
+  };
+
+  return {
+    get value() {
+      return proxyValue;
+    },
+    set value(newVal: T) {
+      if (!Object.is(rawValue, newVal)) {
+        rawValue = newVal;
+        proxyValue = createProxy(newVal, notify);
+        notify();
+      }
+    },
+    subscribe,
+    peek: () => proxyValue,
+    brand: RIPPLE_BRAND,
+  };
+}
+
+function ripplePrimitive<T>(initial: T): Ripple<T> {
   let _value = initial;
 
   const subscribers = new Set<{
