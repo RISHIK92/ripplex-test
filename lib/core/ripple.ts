@@ -1,4 +1,3 @@
-export { computed, effect } from "@preact/signals";
 import { useSyncExternalStore } from "react";
 
 export interface Ripple<T> {
@@ -17,7 +16,10 @@ export function ripple<T>(initial: T): Ripple<T> {
   return ripplePrimitive(initial);
 }
 
-function createProxy<T extends object>(target: T, notify: () => void): T {
+export function createProxy<T extends object>(
+  target: T,
+  notify: () => void
+): T {
   return new Proxy(target, {
     get(obj, key, receiver) {
       const value = Reflect.get(obj, key, receiver);
@@ -41,6 +43,10 @@ function createProxy<T extends object>(target: T, notify: () => void): T {
       return result;
     },
   });
+}
+
+export function rippleArray<T>(items: T[]): Ripple<Ripple<T>[]> {
+  return ripple(items.map((item) => ripple(item)));
 }
 
 function rippleObject<T extends object>(initial: T): Ripple<T> {
@@ -94,7 +100,7 @@ function rippleObject<T extends object>(initial: T): Ripple<T> {
   };
 }
 
-function ripplePrimitive<T>(initial: T): Ripple<T> {
+export function ripplePrimitive<T>(initial: T): Ripple<T> {
   let _value = initial;
 
   const subscribers = new Set<{
