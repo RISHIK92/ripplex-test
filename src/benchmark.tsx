@@ -599,20 +599,17 @@ export default function Benchmark() {
     console.log(`  Zustand: ${formatNumber(zustandEnd - zustandStart)}ms`);
   };
 
-  // NEW TESTS: Memory Profiling (Tests 14-15)
   const test14 = () => {
     console.log("📈 Test 14: Retained Heap Size After Operations");
 
     takeMemorySnapshot("Before operations");
 
-    // Perform heavy operations
     const largeData = generateProjects(5000);
     appStore.projects.value = structuredClone(largeData);
     setZustandProjectsSync(structuredClone(largeData));
 
     takeMemorySnapshot("After large data load");
 
-    // Perform many updates
     for (let i = 0; i < 500; i++) {
       const id = i % 1000;
       if (appStore.projects.value[id]) {
@@ -1071,7 +1068,7 @@ export default function Benchmark() {
             color: "white",
           }}
         >
-          Test 7: Massive Batch
+          Test 7: Massive Batch (1000)
         </button>
         <button
           onClick={test8}
@@ -1101,7 +1098,7 @@ export default function Benchmark() {
             color: "white",
           }}
         >
-          Test 10: Large Dataset
+          Test 10: Large Dataset (array of 5000)
         </button>
 
         <div style={{ marginBottom: 8, width: "100%", marginTop: 16 }}>

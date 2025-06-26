@@ -1,4 +1,20 @@
+export { computed, effect } from "@preact/signals";
 import { useSyncExternalStore } from "react";
+
+let isBatching = false;
+let dirtyStores = new Set<() => void>();
+
+export function batch(fn: () => void) {
+  isBatching = true;
+  fn(); // perform updates
+  isBatching = false;
+
+  for (const notify of dirtyStores) {
+    notify();
+  }
+
+  dirtyStores.clear();
+}
 
 export interface Ripple<T> {
   value: T;
@@ -20,33 +36,46 @@ export function createProxy<T extends object>(
   target: T,
   notify: () => void
 ): T {
-  return new Proxy(target, {
+  const proxy = new Proxy(target, {
     get(obj, key, receiver) {
       const value = Reflect.get(obj, key, receiver);
-      // Deep proxy for nested objects/arrays
-      if (typeof value === "object" && value !== null) {
+      if (
+        typeof value === "object" &&
+        value !== null &&
+        !(RIPPLE_BRAND in value)
+      ) {
         return createProxy(value as any, notify);
       }
       return value;
     },
     set(obj, key, value) {
       const old = obj[key as keyof T];
-      const result = Reflect.set(obj, key, value);
+      const newVal =
+        typeof value === "object" && value !== null && !(RIPPLE_BRAND in value)
+          ? createProxy(value as any, notify)
+          : value;
+
+      const result = Reflect.set(obj, key, newVal);
       if (!Object.is(old, value)) {
-        notify();
+        if (isBatching) {
+          dirtyStores.add(notify);
+        } else {
+          notify();
+        }
       }
       return result;
     },
     deleteProperty(obj, key) {
       const result = Reflect.deleteProperty(obj, key);
-      notify();
+      if (isBatching) {
+        dirtyStores.add(notify);
+      } else {
+        notify();
+      }
       return result;
     },
   });
-}
-
-export function rippleArray<T>(items: T[]): Ripple<Ripple<T>[]> {
-  return ripple(items.map((item) => ripple(item)));
+  return proxy;
 }
 
 function rippleObject<T extends object>(initial: T): Ripple<T> {

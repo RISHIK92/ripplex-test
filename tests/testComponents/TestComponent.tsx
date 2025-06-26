@@ -1,12 +1,12 @@
 import React from "react";
-import { onRipple } from "../../lib/core/onRipple";
+import { useRippleEffect } from "../../lib/core/onRipple";
 import { ripplePrimitive } from "../../lib/core/ripple";
 
 export function TestComponent() {
   const loading = ripplePrimitive(false);
   const error = ripplePrimitive(null);
 
-  onRipple(
+  useRippleEffect(
     "FETCH_DATA",
     () => {
       return new Promise((resolve) => setTimeout(resolve, 10));

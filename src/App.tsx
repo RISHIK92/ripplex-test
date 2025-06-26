@@ -1,6 +1,7 @@
 import "./App.css";
 import { ripple, useRipple, useRippleEffect, emit } from "ripplex";
 import { todoStore } from "./ripples/rippleStore";
+import { useNavigate } from "react-router-dom";
 
 interface OrderWrapper {
   order: {
@@ -13,6 +14,23 @@ const orderStore = {
     Array.from({ length: 1000 }, () => ({ order: { status: false } }))
   ),
 };
+const user = ripple({
+  name: "Alice",
+  profile: {
+    bio: "Developer",
+    twitter: "@alice",
+  },
+});
+
+function UserProfile() {
+  const name = useRipple(user, (u) => u.name);
+  const bio = useRipple(user, (u) => u.profile.bio);
+  return (
+    <div>
+      {name} - {bio}
+    </div>
+  );
+}
 
 function OrderStatus({ index }: { index: number }) {
   const status = useRipple(
@@ -28,6 +46,7 @@ function OrderStatus({ index }: { index: number }) {
 }
 
 function App() {
+  const navigate = useNavigate();
   useRippleEffect(
     "fetch:todos",
     async (_, tools) => {
@@ -37,7 +56,7 @@ function App() {
       if (!res.ok) throw new Error("Failed to fetch todos");
       const data = await res.json();
 
-      todoStore.todos.value = data;
+      todoStore.value = { ...todoStore.value, title: data[0]?.title };
     },
     todoStore
   );
@@ -54,20 +73,26 @@ function App() {
     }
   };
 
-  const todos = useRipple(todoStore.todos);
-  const loading = useRipple(todoStore.loading);
-  const error = useRipple(todoStore.error);
+  function updateName() {
+    user.value.profile.bio = "Fullstack Dev" + Math.round(Math.random() * 100);
+  }
+
+  const title = useRipple(todoStore, (t: any) => t.title);
+  const loading = useRipple(todoStore, (t: any) => t.loading);
+  const error = useRipple(todoStore, (t: any) => t.error);
 
   return (
     <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>
+      <button onClick={() => navigate("/compare")}>
+        Ripplex vs Zustand Testing
+      </button>
+      <button onClick={() => navigate("/specific")}>
+        Ripplex specific Testing
+      </button>
       <h1>Ripplex Nested Update Test</h1>
-      <ul>
-        {todos.map((todo) => (
-          <li key={todo.id}>
-            {todo.title} {todo.completed ? "(Done)" : "(Pending)"}
-          </li>
-        ))}
-      </ul>
+      <UserProfile />
+      <button onClick={updateName}>change name</button>
+      <h2>{title}</h2>
       <button
         onClick={() => emit("fetch:todos")}
         style={{

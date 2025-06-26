@@ -1,4 +1,4 @@
-import { ripple } from "ripplex";
+import { ripple } from "../../lib";
 
 export interface Todo {
   userId: number;
@@ -13,11 +13,12 @@ export const countStore = {
   error: ripple<string | null>(null),
 };
 
-export const todoStore = {
-  todos: ripple<Todo[]>([]),
-  loading: ripple(false),
-  error: ripple<string | null>(null),
-};
+export const todoStore = ripple({
+  title: null,
+  todos: [] as Todo[],
+  loading: false,
+  error: null as string | null,
+});
 
 export const countNew = ripple(0);
 

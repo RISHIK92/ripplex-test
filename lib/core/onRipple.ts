@@ -13,7 +13,11 @@ interface Options {
   [key: string]: any;
 }
 
-export function onRipple(event: string, handler: Handler, options?: Options) {
+export function useRippleEffect(
+  event: string,
+  handler: Handler,
+  options?: Options
+) {
   const stableHandler = useRef(handler);
   useEffect(() => {
     stableHandler.current = handler;
