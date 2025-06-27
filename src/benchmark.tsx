@@ -1125,7 +1125,6 @@ export default function Benchmark() {
           Test 12: Race Conditions
         </button>
 
-        {/* Control Buttons */}
         <div style={{ marginBottom: 8, width: "100%", marginTop: 16 }}>
           <strong> Control Panel:</strong>
         </div>

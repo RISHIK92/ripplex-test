@@ -1,4 +1,3 @@
-export { computed, effect } from "@preact/signals";
 import { useSyncExternalStore } from "react";
 
 let isBatching = false;
@@ -6,7 +5,7 @@ let dirtyStores = new Set<() => void>();
 
 export function batch(fn: () => void) {
   isBatching = true;
-  fn(); // perform updates
+  fn();
   isBatching = false;
 
   for (const notify of dirtyStores) {
@@ -23,14 +22,52 @@ export interface Ripple<T> {
   brand: symbol;
 }
 
-const RIPPLE_BRAND = Symbol("signal");
-
-export function ripple<T>(initial: T): Ripple<T> {
-  if (typeof initial === "object" && initial !== null) {
-    return rippleObject(initial as any) as Ripple<T>;
-  }
-  return ripplePrimitive(initial);
+function isObject(value: unknown): value is object | any[] {
+  return typeof value === "object" && value !== null;
 }
+
+export const RIPPLE_BRAND = Symbol("signal");
+
+interface RippleFunction {
+  <T>(initial: T): Ripple<T>;
+  proxy: <T extends object>(initial: T) => Ripple<T>;
+  signal: typeof ripplePrimitive;
+}
+
+export function rippleProxy<T extends object>(target: T): Ripple<T> {
+  const listeners = new Set<() => void>();
+
+  const notify = () => {
+    if (isBatching) {
+      dirtyStores.add(notify);
+    } else {
+      for (const listener of listeners) listener();
+    }
+  };
+
+  const proxy = createProxy(target, notify);
+
+  const rippleObj: Ripple<T> = {
+    value: proxy,
+    peek: () => proxy,
+    subscribe: (cb: () => void, _selector?: (v: T) => unknown) => {
+      listeners.add(cb);
+      return () => listeners.delete(cb);
+    },
+    brand: RIPPLE_BRAND,
+  };
+
+  return rippleObj;
+}
+
+export const ripple = function <T>(initial: T): Ripple<T> {
+  return isObject(initial) ? rippleObject(initial) : ripplePrimitive(initial);
+} as RippleFunction;
+
+Object.assign(ripple, {
+  proxy: rippleProxy,
+  signal: ripplePrimitive,
+});
 
 export function createProxy<T extends object>(
   target: T,

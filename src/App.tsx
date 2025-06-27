@@ -1,5 +1,6 @@
 import "./App.css";
-import { ripple, useRipple, useRippleEffect, emit } from "ripplex";
+import { useRipple, useRippleEffect, emit } from "ripplex";
+import { ripple } from "../lib";
 import { todoStore } from "./ripples/rippleStore";
 import { useNavigate } from "react-router-dom";
 
@@ -9,11 +10,13 @@ interface OrderWrapper {
   };
 }
 
+// Store
 const orderStore = {
   orders: ripple<OrderWrapper[]>(
     Array.from({ length: 1000 }, () => ({ order: { status: false } }))
   ),
 };
+
 const user = ripple({
   name: "Alice",
   profile: {
@@ -37,7 +40,6 @@ function OrderStatus({ index }: { index: number }) {
     orderStore.orders,
     (orders) => orders[index].order.status
   );
-
   return (
     <p>
       #{index}: <strong>{status ? "Done" : "Pending"}</strong>
@@ -47,15 +49,14 @@ function OrderStatus({ index }: { index: number }) {
 
 function App() {
   const navigate = useNavigate();
+
   useRippleEffect(
     "fetch:todos",
     async (_, tools) => {
       const res = await fetch("https://jsonplaceholder.typicode.com/todos");
       if (tools?.aborted()) return;
-
       if (!res.ok) throw new Error("Failed to fetch todos");
       const data = await res.json();
-
       todoStore.value = { ...todoStore.value, title: data[0]?.title };
     },
     todoStore
@@ -73,13 +74,29 @@ function App() {
     }
   };
 
-  function updateName() {
-    user.value.profile.bio = "Fullstack Dev" + Math.round(Math.random() * 100);
-  }
+  const updateName = () => {
+    user.value.profile.bio = "Fullstack Dev " + Math.round(Math.random() * 100);
+  };
 
   const title = useRipple(todoStore, (t: any) => t.title);
   const loading = useRipple(todoStore, (t: any) => t.loading);
   const error = useRipple(todoStore, (t: any) => t.error);
+
+  const user = ripple.proxy({
+    name: "Rishik",
+    profile: {
+      bio: "Developer",
+      twitter: "@rishik",
+    },
+  });
+
+  console.log(user.value.name);
+  user.value.profile.bio = "Updated";
+
+  // console.log(proxyUser.value.name);
+  // console.log(proxyUser.value.profile.bio);
+  // proxyUser.value.profile.bio = "Fullstack Dev";
+  // console.log(proxyUser.value.profile.bio);
 
   return (
     <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>
@@ -87,11 +104,13 @@ function App() {
         Ripplex vs Zustand Testing
       </button>
       <button onClick={() => navigate("/specific")}>
-        Ripplex specific Testing
+        Ripplex Specific Testing
       </button>
       <h1>Ripplex Nested Update Test</h1>
+
       <UserProfile />
-      <button onClick={updateName}>change name</button>
+      <button onClick={updateName}>Change Bio</button>
+
       <h2>{title}</h2>
       <button
         onClick={() => emit("fetch:todos")}
@@ -106,8 +125,10 @@ function App() {
       >
         Fetch Todos
       </button>
+
       {loading && "loading..."}
-      {error && String(error)}
+      {error && <div style={{ color: "red" }}>{String(error)}</div>}
+
       <div style={{ marginBottom: "20px", display: "flex", gap: "10px" }}>
         <button
           onClick={handleMarkFirst10}
@@ -120,7 +141,7 @@ function App() {
             cursor: "pointer",
           }}
         >
-          Mark First All as Done
+          Mark All as Done
         </button>
         <button
           onClick={handleReset}
@@ -136,6 +157,7 @@ function App() {
           Reset All
         </button>
       </div>
+
       <div
         style={{
           maxHeight: "80vh",

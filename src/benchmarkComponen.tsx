@@ -171,7 +171,6 @@ const EventBasedTest = () => {
   );
 };
 
-// Wrap the entire state in a ripple
 const appState = ripple({
   user: { name: "John", age: 30 },
   settings: { theme: "dark", notifications: true },
@@ -181,25 +180,21 @@ const ObjectMutationTest = () => {
   const renderCount = useRef(0);
   renderCount.current += 1;
 
-  const state = useRipple(appState);
+  const userName = useRipple(appState, (s) => s.user.name);
+  const userAge = useRipple(appState, (s) => s.user.age);
+  const theme = useRipple(appState, (s) => s.settings.theme);
 
   return (
     <div style={{ padding: "10px", border: "1px solid #ccc", margin: "10px" }}>
       <h4>Object Mutation Test (Renders: {renderCount.current})</h4>
       <p>
-        User: {state.user.name}, Age: {state.user.age}
+        User: {userName}, Age: {userAge}
       </p>
-      <p>Theme: {state.settings.theme}</p>
+      <p>Theme: {theme}</p>
 
       <button
         onClick={() => {
-          appState.value = {
-            ...appState.value,
-            user: {
-              ...appState.value.user,
-              name: `User${Math.floor(Math.random() * 100)}`,
-            },
-          };
+          appState.value.user.name = `User${Math.floor(Math.random() * 100)}`;
         }}
       >
         Mutate User Name
@@ -207,13 +202,7 @@ const ObjectMutationTest = () => {
 
       <button
         onClick={() => {
-          appState.value = {
-            ...appState.value,
-            user: {
-              ...appState.value.user,
-              age: Math.floor(Math.random() * 100),
-            },
-          };
+          appState.value.user.age = Math.floor(Math.random() * 100);
         }}
       >
         Mutate User Age
@@ -221,14 +210,8 @@ const ObjectMutationTest = () => {
 
       <button
         onClick={() => {
-          appState.value = {
-            ...appState.value,
-            settings: {
-              ...appState.value.settings,
-              theme:
-                appState.value.settings.theme === "dark" ? "light" : "dark",
-            },
-          };
+          appState.value.settings.theme =
+            appState.value.settings.theme === "dark" ? "light" : "dark";
         }}
       >
         Toggle Theme
