@@ -13,10 +13,14 @@
   "dependencies": {
     "@preact/signals": "^2.2.0",
     "@testing-library/react": "^16.3.0",
+    "immer": "^10.1.1",
+    "mobx": "^6.13.7",
+    "mobx-react-lite": "^4.1.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.6.2",
     "ripplex": "^1.0.2",
+    "ripplex-core": "^0.0.8",
     "zustand": "^5.0.5"
   },
   "devDependencies": {

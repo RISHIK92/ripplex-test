@@ -1,4 +1,5 @@
-import { ripple } from "../../lib";
+// import { ripple } from "../../lib";
+import { ripple } from "ripplex-core";
 
 export interface Todo {
   userId: number;

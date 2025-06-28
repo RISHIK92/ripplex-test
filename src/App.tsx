@@ -82,7 +82,7 @@ function App() {
   const loading = useRipple(todoStore, (t: any) => t.loading);
   const error = useRipple(todoStore, (t: any) => t.error);
 
-  const user = ripple.proxy({
+  const user = ripple({
     name: "Rishik",
     profile: {
       bio: "Developer",

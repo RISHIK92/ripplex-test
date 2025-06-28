@@ -16,7 +16,7 @@ interface Options {
 export function useRippleEffect(
   event: string,
   handler: Handler,
-  options?: Options
+  options?: Options | Ripple<any>
 ) {
   const stableHandler = useRef(handler);
   useEffect(() => {
@@ -30,10 +30,44 @@ export function useRippleEffect(
     const wrapped = async (payload?: any) => {
       if (cancelled) return;
 
-      const loadingSignal =
-        options?.loadingSignal ?? (options?.loading as Ripple<boolean>);
-      const errorSignal =
-        options?.errorSignal ?? (options?.error as Ripple<any>);
+      let loadingSignal: Ripple<boolean> | undefined;
+      let errorSignal: Ripple<any> | undefined;
+
+      if (
+        options &&
+        typeof options === "object" &&
+        "value" in options &&
+        typeof options.value === "object"
+      ) {
+        const obj = options.value;
+        if ("loading" in obj && typeof obj.loading === "boolean") {
+          loadingSignal = {
+            get value() {
+              return options.value.loading;
+            },
+            set value(val: boolean) {
+              options.value = { ...options.value, loading: val };
+            },
+          } as Ripple<boolean>;
+        }
+        if ("error" in obj) {
+          errorSignal = {
+            get value() {
+              return options.value.error;
+            },
+            set value(val: any) {
+              options.value = { ...options.value, error: val };
+            },
+          } as Ripple<any>;
+        }
+      } else {
+        loadingSignal =
+          (options as Options)?.loadingSignal ??
+          ((options as Options)?.loading as Ripple<boolean>);
+        errorSignal =
+          (options as Options)?.errorSignal ??
+          ((options as Options)?.error as Ripple<any>);
+      }
 
       loadingSignal && (loadingSignal.value = true);
       errorSignal && (errorSignal.value = null);

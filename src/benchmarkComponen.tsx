@@ -1,6 +1,8 @@
 import React from "react";
 import { useEffect, useRef } from "react";
-import { useRipple, ripple, useRippleEffect, emit } from "ripplex";
+import { useRipple, emit, ripple, useRippleEffect } from "../lib";
+// import { useRipple, emit, ripple, useRippleEffect } from "ripplex-core";
+// import { useRipple, emit, ripple, useRippleEffect } from "ripplex";
 
 const counter = ripple(0);
 const doubled = ripple(0);
@@ -9,7 +11,6 @@ const BasicReactivityTest = () => {
   const renderCount = useRef(0);
   renderCount.current += 1;
   doubled.value = counter.value * 2;
-
   return (
     <div style={{ padding: "10px", border: "1px solid #ccc", margin: "10px" }}>
       <h4>Basic Reactivity Test</h4>
@@ -89,30 +90,37 @@ const SelectiveSubscriptionTest = () => {
   );
 };
 
-// 3. Event-Based Communication Test (CORRECTED)
-export const loadingStore = {
-  message: ripple([]),
-  loading: ripple(false),
-  error: ripple(null),
-};
+export const loadingStore = ripple({
+  message: [],
+  fruit: [{ theme: "dark" }],
+  loading: false,
+  error: null,
+});
 
 const EventBasedTest = () => {
   useRippleEffect(
     "user-action",
     async (payload: any) => {
-      console.log("vf");
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      loadingStore.message.value = [
-        ...loadingStore.message.value,
+      loadingStore.value.message = [
+        ...loadingStore.value.message,
         `Action: ${payload} at ${new Date().toLocaleTimeString()}`,
       ];
     },
     loadingStore
   );
+  const toggleTheme = () => {
+    const toggleTheme = () => {
+      loadingStore.value.fruit = loadingStore.value.fruit.map((f, i) =>
+        i === 0 ? { ...f, theme: f.theme === "dark" ? "light" : "dark" } : f
+      );
+    };
+  };
 
-  const loading = useRipple(loadingStore.loading);
-  const error = useRipple(loadingStore.error);
-  const messageLog = useRipple(loadingStore.message);
+  const loading = useRipple(loadingStore, (s) => s.loading);
+  const error = useRipple(loadingStore, (s) => s.error);
+  const messageLog = useRipple(loadingStore, (s) => s.message);
+  const fruit = useRipple(loadingStore, (s) => s.fruit);
 
   const triggerAction = (action: string) => {
     emit("user-action", action);
@@ -127,7 +135,12 @@ const EventBasedTest = () => {
         <button onClick={() => triggerAction("login")} disabled={loading}>
           Trigger Login Event
         </button>
-        x
+        <ul>
+          {fruit.map((item, i) => (
+            <li key={i}>{JSON.stringify(item)}</li>
+          ))}
+        </ul>
+        <button onClick={toggleTheme}>click</button>
         <button onClick={() => triggerAction("logout")} disabled={loading}>
           Trigger Logout Event
         </button>
@@ -171,18 +184,26 @@ const EventBasedTest = () => {
   );
 };
 
-const appState = ripple({
+const appState = ripple.immer({
   user: { name: "John", age: 30 },
-  settings: { theme: "dark", notifications: true },
+  settings: {
+    theme: {
+      themeInside: { theme2: { theme3: { theme4: "dark" } } },
+      notifications: true,
+    },
+    loading: [],
+  },
 });
 
 const ObjectMutationTest = () => {
   const renderCount = useRef(0);
   renderCount.current += 1;
-
   const userName = useRipple(appState, (s) => s.user.name);
   const userAge = useRipple(appState, (s) => s.user.age);
-  const theme = useRipple(appState, (s) => s.settings.theme);
+  const theme = useRipple(
+    appState,
+    (s) => s.settings.theme.themeInside.theme2.theme3.theme4
+  );
 
   return (
     <div style={{ padding: "10px", border: "1px solid #ccc", margin: "10px" }}>
@@ -191,28 +212,53 @@ const ObjectMutationTest = () => {
         User: {userName}, Age: {userAge}
       </p>
       <p>Theme: {theme}</p>
-
       <button
         onClick={() => {
-          appState.value.user.name = `User${Math.floor(Math.random() * 100)}`;
+          appState.value = {
+            ...appState.value,
+            user: {
+              ...appState.value.user,
+              name: `User${Math.floor(Math.random() * 100)}`,
+            },
+          };
         }}
       >
         Mutate User Name
       </button>
 
+      {/* <button
+        onClick={() => {
+          appState.value = {
+            ...appState.value,
+            user: {
+              ...appState.value.user,
+              age: Math.floor(Math.random() * 100),
+            },
+          };
+        }}
+      >
+        Mutate User Age
+      </button> */}
+
       <button
         onClick={() => {
-          appState.value.user.age = Math.floor(Math.random() * 100);
+          appState.update((draft) => {
+            draft.user.age = Math.floor(Math.random() * 100);
+          });
         }}
       >
         Mutate User Age
       </button>
 
       <button
-        onClick={() => {
-          appState.value.settings.theme =
-            appState.value.settings.theme === "dark" ? "light" : "dark";
-        }}
+        onClick={() =>
+          appState.update((draft) => {
+            draft.settings.theme.themeInside.theme2.theme3.theme4 =
+              draft.settings.theme.themeInside.theme2.theme3.theme4 === "dark"
+                ? "light"
+                : "dark";
+          })
+        }
       >
         Toggle Theme
       </button>
@@ -231,13 +277,12 @@ const PerformanceTest = () => {
   const filtered = useRipple(filteredItems);
   const currentFilter = useRipple(filter);
 
-  // ✅ SAFE: This only re-runs when `currentFilter` or `itemsList` changes
   useEffect(() => {
     const filterValue = currentFilter.toLowerCase();
     filteredItems.value = itemsList.filter((item) =>
       item.value.toString().includes(filterValue)
     );
-  }, [currentFilter, itemsList]); // useRipple ensures stable tracking
+  }, [currentFilter, itemsList]);
 
   return (
     <div style={{ padding: "10px", border: "1px solid #ccc", margin: "10px" }}>
