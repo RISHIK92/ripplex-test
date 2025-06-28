@@ -106,6 +106,9 @@ function App() {
       <button onClick={() => navigate("/specific")}>
         Ripplex Specific Testing
       </button>
+      <button onClick={() => navigate("/advanced")}>
+        Advanced Benchmark (with memory)
+      </button>
       <h1>Ripplex Nested Update Test</h1>
 
       <UserProfile />
