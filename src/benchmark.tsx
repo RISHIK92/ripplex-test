@@ -24,23 +24,12 @@ type Project = {
   tasks: Task[];
 };
 
-function createRipplexStore<T extends object>(initial: T) {
-  const base = ripple.immer(initial);
-
-  return {
-    ...base,
-    update(recipe: (draft: Draft<T>) => void) {
-      base.value = produce(base.value, recipe);
-    },
-  };
-}
-
-export const appStore = {
-  projects: createRipplexStore<Project[]>([]),
+const appStore = {
+  projects: ripple.immer<Project[]>([]),
 
   async updateProject(id: number, updater: (project: Draft<Project>) => void) {
-    this.projects.update((draft: any[]) => {
-      const project = draft.find((p: { id: number }) => p.id === id);
+    await this.projects.update((draft: Project[]) => {
+      const project = draft.find((p) => p.id === id);
       if (project) updater(project);
     });
   },
@@ -48,9 +37,9 @@ export const appStore = {
   async batchUpdate(
     updates: Array<{ id: number; updater: (project: Draft<Project>) => void }>
   ) {
-    this.projects.update((draft: any[]) => {
+    await this.projects.update((draft: Project[]) => {
       updates.forEach(({ id, updater }) => {
-        const project = draft.find((p: { id: number }) => p.id === id);
+        const project = draft.find((p) => p.id === id);
         if (project) updater(project);
       });
     });
@@ -60,8 +49,8 @@ export const appStore = {
     id: number,
     updater: (project: Draft<Project>) => void
   ) {
-    this.projects.update((draft: any[]) => {
-      const project = draft.find((p: { id: number }) => p.id === id);
+    await this.projects.update((draft: Project[]) => {
+      const project = draft.find((p) => p.id === id);
       if (project) updater(project);
     });
   },
@@ -71,10 +60,10 @@ export const appStore = {
     taskId: number,
     updater: (task: Draft<Task>) => void
   ) {
-    this.projects.update((draft: any[]) => {
-      const project = draft.find((p: { id: number }) => p.id === projectId);
+    await this.projects.update((draft: Project[]) => {
+      const project = draft.find((p) => p.id === projectId);
       if (project) {
-        const task = project.tasks.find((t: { id: number }) => t.id === taskId);
+        const task = project.tasks.find((t) => t.id === taskId);
         if (task) updater(task);
       }
     });
@@ -86,14 +75,12 @@ export const appStore = {
     subtaskId: number,
     updater: (subtask: Draft<Subtask>) => void
   ) {
-    this.projects.update((draft: any[]) => {
-      const project = draft.find((p: { id: number }) => p.id === projectId);
+    await this.projects.update((draft: Project[]) => {
+      const project = draft.find((p) => p.id === projectId);
       if (project) {
-        const task = project.tasks.find((t: { id: number }) => t.id === taskId);
+        const task = project.tasks.find((t) => t.id === taskId);
         if (task) {
-          const subtask = task.subtasks.find(
-            (s: { id: number }) => s.id === subtaskId
-          );
+          const subtask = task.subtasks.find((s) => s.id === subtaskId);
           if (subtask) updater(subtask);
         }
       }
@@ -322,7 +309,7 @@ export default function Benchmark() {
 
   const runTestMultipleTimes = async (
     testName: string,
-    testFunction: () => void,
+    testFunction: () => void | Promise<void>,
     iterations: number = 5
   ) => {
     console.log(`\nRunning ${testName} (${iterations} iterations)...`);
@@ -339,7 +326,7 @@ export default function Benchmark() {
       }
 
       await new Promise((resolve) => setTimeout(resolve, 50));
-      testFunction();
+      await testFunction();
       await new Promise((resolve) => setTimeout(resolve, 50));
     }
 
@@ -380,10 +367,10 @@ export default function Benchmark() {
       return;
     }
 
-    // Ripplex with Immer
+    // Ripplex with Proxy
     const ripplexStart = performance.now();
-    appStore.updateProject(1, (draft) => {
-      draft.name = "🔁 Updated Ripplex Project";
+    appStore.updateProject(1, (project) => {
+      project.name = "🔁 Updated Ripplex Project";
     });
     const ripplexEnd = performance.now();
 
@@ -415,13 +402,13 @@ export default function Benchmark() {
       return;
     }
 
-    // Ripplex with Immer
+    // Ripplex with Proxy
     const ripplexStart = performance.now();
     appStore.batchUpdate(
       Array.from({ length: 100 }, (_, i) => ({
         id: (i % 1000) + 1,
-        updater: (draft: Draft<Project>) => {
-          draft.name = `Ripplex Batch Update ${i}`;
+        updater: (project: Project) => {
+          project.name = `Ripplex Batch Update ${i}`;
         },
       }))
     );
@@ -511,10 +498,10 @@ export default function Benchmark() {
       return;
     }
 
-    // Ripplex with Immer
+    // Ripplex with Proxy
     const ripplexStart = performance.now();
-    appStore.updateSubtask(1, 1, 1, (draft) => {
-      draft.done = true;
+    appStore.updateSubtask(1, 1, 1, (subtask) => {
+      subtask.done = true;
     });
     const ripplexEnd = performance.now();
 
@@ -567,14 +554,14 @@ export default function Benchmark() {
 
     console.log("Test 7: Massive Batch Updates (1000 ops)");
 
-    // Ripplex with Immer
+    // Ripplex with Proxy
     const ripplexStart = performance.now();
     appStore.batchUpdate(
       Array.from({ length: 1000 }, (_, i) => ({
         id: (i % 1000) + 1,
-        updater: (draft: Draft<Project>) => {
-          draft.name = `Heavy Ripplex ${i}`;
-          draft.tasks[0].completed = i % 2 === 0;
+        updater: (project: Project) => {
+          project.name = `Heavy Ripplex ${i}`;
+          project.tasks[0].completed = i % 2 === 0;
         },
       }))
     );
@@ -641,19 +628,19 @@ export default function Benchmark() {
 
     console.log("Test 8: Deep Nested Updates (100 items)");
 
-    // Ripplex with Immer
+    // Ripplex with Proxy
     const ripplexStart = performance.now();
-    appStore.projects.update((draft) => {
-      for (let i = 0; i < 100; i++) {
-        if (i >= draft.length) continue;
-        for (let j = 0; j < 5; j++) {
-          if (j >= draft[i].tasks[0].subtasks.length) continue;
-          draft[i].tasks[0].subtasks[j].done =
-            !draft[i].tasks[0].subtasks[j].done;
-          draft[i].tasks[0].subtasks[j].title = `Updated ${i}-${j}`;
-        }
+    for (let i = 0; i < 100; i++) {
+      if (i >= appStore.projects.value.length) continue;
+      for (let j = 0; j < 5; j++) {
+        if (j >= appStore.projects.value[i].tasks[0].subtasks.length) continue;
+        appStore.projects.value[i].tasks[0].subtasks[j].done =
+          !appStore.projects.value[i].tasks[0].subtasks[j].done;
+        appStore.projects.value[i].tasks[0].subtasks[
+          j
+        ].title = `Updated ${i}-${j}`;
       }
-    });
+    }
     const ripplexEnd = performance.now();
 
     // Zustand
@@ -748,7 +735,7 @@ export default function Benchmark() {
         if (i >= 50) return project;
         return { ...project, name: `Rapid ${round}-${i}` };
       });
-      setZustandProjectsSync([...rapidUpdated]);
+      setZustandProjectsSync(rapidUpdated);
     }
     const zustandEnd = performance.now();
 
@@ -1025,7 +1012,7 @@ export default function Benchmark() {
     }
   };
 
-  const test16 = async () => {
+  const test16 = () => {
     if (
       !ripplexProjects?.length ||
       !zustandProjects?.length ||
@@ -1057,8 +1044,11 @@ export default function Benchmark() {
       );
     }
 
-    await Promise.all(asyncUpdates);
-    const ripplexEnd = performance.now();
+    Promise.all(asyncUpdates).then(() => {
+      const ripplexEnd = performance.now();
+      recordPerformance("asyncUpdates", "ripplex", ripplexEnd - ripplexStart);
+      console.log(`  Ripplex: ${formatNumber(ripplexEnd - ripplexStart)}ms`);
+    });
 
     // Clear async updates array
     asyncUpdates.length = 0;
@@ -1084,8 +1074,11 @@ export default function Benchmark() {
       );
     }
 
-    await Promise.all(asyncUpdates);
-    const zustandEnd = performance.now();
+    Promise.all(asyncUpdates).then(() => {
+      const zustandEnd = performance.now();
+      recordPerformance("asyncUpdates", "zustand", zustandEnd - zustandStart);
+      console.log(`  Zustand: ${formatNumber(zustandEnd - zustandStart)}ms`);
+    });
 
     // MobX async updates
     const mobxStart = performance.now();
@@ -1105,19 +1098,14 @@ export default function Benchmark() {
       );
     }
 
-    await Promise.all(asyncUpdates);
-    const mobxEnd = performance.now();
-
-    recordPerformance("asyncUpdates", "ripplex", ripplexEnd - ripplexStart);
-    recordPerformance("asyncUpdates", "zustand", zustandEnd - zustandStart);
-    recordPerformance("asyncUpdates", "mobx", mobxEnd - mobxStart);
-
-    console.log(`  Ripplex: ${formatNumber(ripplexEnd - ripplexStart)}ms`);
-    console.log(`  Zustand: ${formatNumber(zustandEnd - zustandStart)}ms`);
-    console.log(`  MobX: ${formatNumber(mobxEnd - mobxStart)}ms`);
+    Promise.all(asyncUpdates).then(() => {
+      const mobxEnd = performance.now();
+      recordPerformance("asyncUpdates", "mobx", mobxEnd - mobxStart);
+      console.log(`  MobX: ${formatNumber(mobxEnd - mobxStart)}ms`);
+    });
   };
 
-  const test17 = async () => {
+  const test17 = () => {
     if (
       !ripplexProjects?.length ||
       !zustandProjects?.length ||
@@ -1151,9 +1139,13 @@ export default function Benchmark() {
       }, 10); // Finishes first but should be overridden
     });
 
-    await Promise.all([ripplexPromise1, ripplexPromise2]);
-    ripplexFinalValue = appStore.projects.value[0].name;
-    const ripplexEnd = performance.now();
+    Promise.all([ripplexPromise1, ripplexPromise2]).then(() => {
+      ripplexFinalValue = appStore.projects.value[0].name;
+      const ripplexEnd = performance.now();
+      recordPerformance("raceConditions", "ripplex", ripplexEnd - ripplexStart);
+      console.log(`  Ripplex final value: ${ripplexFinalValue}`);
+      console.log(`  Ripplex: ${formatNumber(ripplexEnd - ripplexStart)}ms`);
+    });
 
     // Zustand
     const zustandStart = performance.now();
@@ -1177,9 +1169,13 @@ export default function Benchmark() {
       }, 10);
     });
 
-    await Promise.all([zustandPromise1, zustandPromise2]);
-    zustandFinalValue = zustandProjects[0].name;
-    const zustandEnd = performance.now();
+    Promise.all([zustandPromise1, zustandPromise2]).then(() => {
+      zustandFinalValue = zustandProjects[0].name;
+      const zustandEnd = performance.now();
+      recordPerformance("raceConditions", "zustand", zustandEnd - zustandStart);
+      console.log(`  Zustand final value: ${zustandFinalValue}`);
+      console.log(`  Zustand: ${formatNumber(zustandEnd - zustandStart)}ms`);
+    });
 
     // MobX
     const mobxStart = performance.now();
@@ -1201,20 +1197,13 @@ export default function Benchmark() {
       }, 10);
     });
 
-    await Promise.all([mobxPromise1, mobxPromise2]);
-    mobxFinalValue = mobxStore.projects[0].name;
-    const mobxEnd = performance.now();
-
-    recordPerformance("raceConditions", "ripplex", ripplexEnd - ripplexStart);
-    recordPerformance("raceConditions", "zustand", zustandEnd - zustandStart);
-    recordPerformance("raceConditions", "mobx", mobxEnd - mobxStart);
-
-    console.log(`  Ripplex final value: ${ripplexFinalValue}`);
-    console.log(`  Zustand final value: ${zustandFinalValue}`);
-    console.log(`  MobX final value: ${mobxFinalValue}`);
-    console.log(`  Ripplex: ${formatNumber(ripplexEnd - ripplexStart)}ms`);
-    console.log(`  Zustand: ${formatNumber(zustandEnd - zustandStart)}ms`);
-    console.log(`  MobX: ${formatNumber(mobxEnd - mobxStart)}ms`);
+    Promise.all([mobxPromise1, mobxPromise2]).then(() => {
+      mobxFinalValue = mobxStore.projects[0].name;
+      const mobxEnd = performance.now();
+      recordPerformance("raceConditions", "mobx", mobxEnd - mobxStart);
+      console.log(`  MobX final value: ${mobxFinalValue}`);
+      console.log(`  MobX: ${formatNumber(mobxEnd - mobxStart)}ms`);
+    });
   };
 
   const test18 = () => {
@@ -1481,11 +1470,7 @@ export default function Benchmark() {
     ];
 
     for (const config of testConfigs) {
-      if (
-        config.fn === test16 ||
-        config.fn === test17 ||
-        config.fn === test21
-      ) {
+      if (config.fn === test21) {
         // Handle async tests
         console.log(
           `\nRunning ${config.name} (${config.iterations} iterations)...`
@@ -1719,42 +1704,25 @@ export default function Benchmark() {
             cursor: isRunning ? "not-allowed" : "pointer",
           }}
         >
-          {isRunning
-            ? ` ${currentTest || "Running..."}`
-            : " Run All Tests (Comprehensive)"}
+          {isRunning ? ` ${currentTest || "Running..."}` : "Run All Tests"}
         </button>
       </div>
 
       {showTestComponents && (
-        <div
-          style={{
-            marginBottom: 20,
-            padding: 10,
-            backgroundColor: "#f8f9fa",
-            border: "1px solid #dee2e6",
-          }}
-        >
-          <h3>🔁 Re-render Test Components</h3>
-          <div style={{ display: "flex", gap: 20 }}>
-            <div>
-              <h4>Ripplex Components:</h4>
-              <RipplexTestComponent projectId={1} />
-              <RipplexTestComponent projectId={2} />
-              <RipplexTestComponent projectId={3} />
-            </div>
-            <div>
-              <h4>Zustand Components:</h4>
-              <ZustandTestComponent projectId={1} />
-              <ZustandTestComponent projectId={2} />
-              <ZustandTestComponent projectId={3} />
-            </div>
-            <div>
-              <h4>MobX Components:</h4>
-              <MobxTestComponent projectId={1} />
-              <MobxTestComponent projectId={2} />
-              <MobxTestComponent projectId={3} />
-            </div>
+        <div style={{ marginTop: 20, padding: 20, border: "1px solid #ccc" }}>
+          <h2>Test Components</h2>
+          <div style={{ marginBottom: 20 }}>
+            <strong>Ripplex:</strong>
           </div>
+          <RipplexTestComponent projectId={1} />
+          <div style={{ marginBottom: 20, marginTop: 20 }}>
+            <strong>Zustand:</strong>
+          </div>
+          <ZustandTestComponent projectId={1} />
+          <div style={{ marginBottom: 20, marginTop: 20 }}>
+            <strong>MobX:</strong>
+          </div>
+          <MobxTestComponent projectId={1} />
         </div>
       )}
 
@@ -1831,7 +1799,7 @@ export default function Benchmark() {
                 >
                   <strong>{testName}:</strong>
                   {Object.entries(libraries).map(([lib, stats]) => {
-                    const { average, min, max, stdDev, times } = stats as any;
+                    const { average, min, max, stdDev } = stats as any;
                     const color =
                       lib === "ripplex"
                         ? "#e74c3c"
@@ -1849,7 +1817,7 @@ export default function Benchmark() {
                         <span style={{ marginLeft: "5px" }}>
                           {formatNumber(average)}ms avg (±{formatNumber(stdDev)}
                           ) [{formatNumber(min)}-{formatNumber(max)}ms] (
-                          {times.length} runs)
+                          {stats.times.length} runs)
                         </span>
                       </div>
                     );
