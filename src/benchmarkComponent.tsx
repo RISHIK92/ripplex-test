@@ -88,7 +88,12 @@ const SelectiveSubscriptionTest = () => {
   );
 };
 
-export const loadingStore = ripple({
+export const loadingStore = ripple<{
+  message: string[];
+  fruit: { theme: string }[];
+  loading: boolean;
+  error: any;
+}>({
   message: [],
   fruit: [{ theme: "dark" }],
   loading: false,
@@ -268,7 +273,9 @@ const items = ripple(
   Array.from({ length: 1000 }, (_, i) => ({ id: i, value: i }))
 );
 const filter = ripple("");
-const filteredItems = ripple([]);
+type Item = { id: number; value: number };
+
+const filteredItems = ripple<Item[]>([]);
 
 const PerformanceTest = () => {
   const itemsList = useRipple(items);
@@ -295,7 +302,7 @@ const PerformanceTest = () => {
         Showing {filtered.length} of {itemsList.length} items
       </p>
       <div style={{ maxHeight: "200px", overflow: "auto" }}>
-        {filtered.slice(0, 50).map((item) => (
+        {filtered.slice(0, 50).map((item: any) => (
           <div key={item.id} style={{ padding: "2px" }}>
             Item {item.id}: {item.value}
           </div>
