@@ -1,5 +1,5 @@
 import React from "react";
-import { useRippleEffect } from "../../lib/core/onRipple";
+import { useRippleEffect } from "ripplex-core";
 import { ripplePrimitive } from "../../lib/core/ripple";
 
 export function TestComponent() {

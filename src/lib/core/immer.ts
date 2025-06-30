@@ -1,16 +1,13 @@
 import { ripplePrimitive } from "./ripple";
 import type { produce as ImmerProduce, Draft } from "immer";
 
-let produce: typeof ImmerProduce | undefined;
-
-try {
-  produce = (await import("immer")).produce;
-} catch {}
+let produce: typeof import("immer").produce | undefined;
 
 async function loadProduce(): Promise<typeof ImmerProduce> {
   if (produce) return produce;
   try {
-    produce = (await import("immer")).produce;
+    const immer = await import("immer");
+    produce = immer.produce;
     return produce;
   } catch {
     throw new Error(
