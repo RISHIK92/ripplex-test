@@ -1,6 +1,7 @@
 import "./App.css";
-import { useRipple, useRippleEffect, emit } from "ripplex";
-import { ripple } from "../lib";
+// import { useRipple, useRippleEffect, emit } from "ripplex";
+// import { ripple } from "../lib";
+import { ripple, useRipple, useRippleEffect, emit } from "ripplex-core";
 import { todoStore } from "./ripples/rippleStore";
 import { useNavigate } from "react-router-dom";
 

@@ -21,7 +21,7 @@
     "react-router-dom": "^7.6.2",
     "recharts": "^3.0.2",
     "ripplex": "^1.0.2",
-    "ripplex-core": "^0.0.8",
+    "ripplex-core": "^0.0.9",
     "zustand": "^5.0.5"
   },
   "devDependencies": {
