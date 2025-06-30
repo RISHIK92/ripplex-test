@@ -1,4 +1,4 @@
-import { useRipple } from "../../lib";
+import { useRipple } from "ripplex-core";
 import { countStore } from "../ripples/rippleStore";
 
 export const RipplexCounter = ({ index }: { index: number }) => {

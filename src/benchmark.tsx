@@ -1,5 +1,4 @@
 import React, { useState, useRef, Profiler, useEffect } from "react";
-// import { ripple, useRipple } from "../lib";
 import { ripple, useRipple } from "ripplex-core";
 import { useZustandStore } from "./ripples/zustandStore";
 import { makeAutoObservable, reaction, runInAction } from "mobx";

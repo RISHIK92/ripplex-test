@@ -1,8 +1,6 @@
 import React from "react";
 import { useEffect, useRef } from "react";
-// import { useRipple, emit, ripple, useRippleEffect } from "../lib";
 import { useRipple, emit, ripple, useRippleEffect } from "ripplex-core";
-// import { useRipple, emit, ripple, useRippleEffect } from "ripplex";
 
 const counter = ripple(0);
 const doubled = ripple(0);

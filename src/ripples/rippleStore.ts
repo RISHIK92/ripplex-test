@@ -1,5 +1,4 @@
-import { ripple } from "../../lib";
-// import { ripple } from "ripplex-core";
+import { ripple } from "ripplex-core";
 
 export const appStore1 = {
   user: ripple<{

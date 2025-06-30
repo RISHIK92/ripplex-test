@@ -6,7 +6,7 @@
   "scripts": {
     "test": "jest",
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -p tsconfig.json && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -14,12 +14,13 @@
     "@preact/signals": "^2.2.0",
     "@testing-library/react": "^16.3.0",
     "immer": "^10.1.1",
-    "mobx": "^6.13.7",
+    "mobx": "^6.11.0",
     "mobx-react-lite": "^4.1.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.6.2",
     "recharts": "^3.0.2",
+    "redux": "^4.2.1",
     "ripplex": "^1.0.2",
     "ripplex-core": "^0.0.9",
     "zustand": "^5.0.5"
@@ -37,7 +38,7 @@
     "jest": "^30.0.3",
     "jest-environment-jsdom": "^30.0.2",
     "ts-jest": "^29.4.0",
-    "typescript": "~5.8.3",
+    "typescript": "^5.8.3",
     "typescript-eslint": "^8.30.1",
     "vite": "^6.3.5"
   }

@@ -1,5 +1,4 @@
-import React, { useState, useRef, useMemo } from "react";
-import { useRipple } from "../lib";
+import { useRipple } from "ripplex-core";
 import { appStore } from "./ripples/rippleStore";
 import { useZustandStore } from "./ripples/zustandStore";
 
